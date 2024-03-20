@@ -1,0 +1,5 @@
+# 定义 cookie
+cookie = '7efb9e9e%2C1723601124%2C655cb%2A21CjB8BpictfDua6kGIUfprlAArH6aJ0CSqPyBSni7OfdmdjtqGKrxkXoPQS1vS7GHNP8SVjdSN3ktWUNfTTBzbWQ2OW9mQVZFQkk4bXg4N0xTWEFCZzhVRmRqLUVmdDg1THd4aXJzdDJEWE1Db2FxaXdmdno2QkVGazR3aGFmVmxDNV9NVzdpUS13IIEC'  # 你的 Cookie，用于认证
+
+# 数据库
+database_name = 'bilibili.db'

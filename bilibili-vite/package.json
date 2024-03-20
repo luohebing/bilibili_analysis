@@ -1,0 +1,36 @@
+{
+  "name": "bilibili-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/d3": "^7.4.3",
+    "@types/d3-cloud": "^1.2.9",
+    "@types/socket.io-client": "^3.0.0",
+    "@types/wordcloud": "^1.2.2",
+    "axios": "^1.6.7",
+    "d3": "^7.8.5",
+    "d3-cloud": "^1.2.7",
+    "echarts": "^5.5.0",
+    "element-plus": "^2.5.6",
+    "socket.io-client": "^4.7.4",
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5",
+    "vuex": "^4.0.2",
+    "vuex-persistedstate": "^4.1.0",
+    "wordcloud": "^1.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "@vitejs/plugin-vue": "^5.0.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.0",
+    "vue-tsc": "^1.8.27"
+  }
+}
