@@ -2,7 +2,7 @@
   <div class="container">
     <el-menu class="el-menu-demo" mode="horizontal" style="width: 100%;box-shadow: 0 0 6px 2px lightblue;"
       :default-active="selectedTab" @select="selectTab">
-      <el-menu-item>
+      <el-menu-item @click="navigateToMainpage">
         <img src="/icon/logo.png" class="logo" />
         <span
           style="font-size: 24px;font-family: 'ZCOOL KuaiLe', cursive;color: rgb(0, 178, 255);margin-left: 10px;">热点关注倾向实时分析</span>
@@ -14,7 +14,10 @@
         <el-menu-item index="keywords">关键词分析</el-menu-item>
         <el-menu-item index="videos">视频分析</el-menu-item>
       </el-sub-menu>
-      <el-menu-item index="settings">设置</el-menu-item>
+      <!-- <el-menu-item index="settings">设置</el-menu-item> -->
+      <el-menu-item index="settings" @click="navigateToSettings">
+        设置
+      </el-menu-item>
     </el-menu>
     <div class="overlay" v-show="isRefreshing"></div>
     <div v-if="selectedTab === 'keywords'" class="keyword-section">
@@ -23,7 +26,8 @@
         <div slot="header" class="clearfix">
           <span><b>排行榜热搜关键词</b></span>
         </div>
-        <el-table :data="keywords" style="width: 100%; overflow-y: auto; max-height: 440px;" @row-click="handleRowClick">
+        <el-table :data="keywords" style="width: 100%; overflow-y: auto; max-height: 440px;"
+          @row-click="handleRowClick">
           <el-table-column prop="0" label="关键词"></el-table-column>
           <el-table-column prop="1" label="权重">
             <template #default="{ row }">
@@ -136,6 +140,12 @@ export default {
     };
   },
   methods: {
+    navigateToMainpage() {
+      this.$router.push({ name: 'MainPage' }); // 使用路由的名称导航到 Mainpage.vue
+    },
+    navigateToSettings() {
+      this.$router.push({ name: 'Settings' }); // 使用路由的名称导航到 Settings.vue
+    },
     searchVideo() {
       // 在这里发送请求到后端，获取并显示视频信息
       // 例如：this.$http.get(`/api/videos/${this.bvid}`)
@@ -173,6 +183,7 @@ export default {
     const selectedTab = ref(localStorage.getItem('selectedTab') || 'keywords');
 
     const selectTab = (tab: string) => {
+      // if (tab === 'keywords' || tab === 'videos' || tab === 'settings' || tab === 'ranking') {
       if (tab === 'keywords' || tab === 'videos' || tab === 'settings' || tab === 'ranking') {
         selectedTab.value = tab;
         localStorage.setItem('selectedTab', tab);
@@ -459,9 +470,5 @@ pre {
   height: 30px;
   /* 调整为适合的大小 */
   width: auto;
-  pointer-events: none;
-  /* 禁止鼠标事件 */
-  user-select: none;
-  /* 禁止用户选择 */
 }
 </style>
