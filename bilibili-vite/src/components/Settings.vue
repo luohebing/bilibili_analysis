@@ -23,7 +23,32 @@
 
         <div v-if="selectedTab === 'settings'">
             <!-- 设置相关的元素 -->
-            
+            <el-card class="box-card" style="margin-top: 100px;position:absolute;left:10%;width:80%; max-height: 80%;">
+                <div slot="header" class="clearfix">
+                    <span><b>设置</b></span>
+                </div>
+                <div class="setting-item">
+                    <el-tooltip content="包含进行情感分析时缓存到本地的视频评论、弹幕等数据。" placement="top">
+                        <div class="setting-title"><b>情感分析语料缓存</b></div>
+                    </el-tooltip>
+                    <div class="setting-actions">
+                        <span>{{ emotionCacheSize }}</span>
+                        <el-button type="primary" @click="calculateEmotionCacheSize">计算缓存大小</el-button>
+                        <el-button type="danger" @click="clearEmotionCache">清空缓存</el-button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <el-tooltip content="包含热门视频封面图片文件缓存，删除后浏览视频时会重新加载。" placement="top">
+                        <div class="setting-title"><b>视频封面缓存</b></div>
+                    </el-tooltip>
+                    <div class="setting-actions">
+                        <span>{{ videoCacheSize }}</span>
+                        <el-button type="primary" @click="calculateVideoCacheSize">计算缓存大小</el-button>
+                        <el-button type="danger" @click="clearVideoCache">清空缓存</el-button>
+                    </div>
+                </div>
+            </el-card>
+
         </div>
 
     </div>
@@ -48,6 +73,8 @@ export default {
     data() {
         return {
             bvid: '',
+            emotionCacheSize: '',
+            videoCacheSize: ''
         };
     },
     methods: {
@@ -81,6 +108,46 @@ export default {
                 return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
         },
+        calculateEmotionCacheSize() {
+            // 向后端发送请求计算情感分析语料缓存大小
+            axios.get('http://localhost:5000/api/emotion/cache/size')
+                .then(response => {
+                    this.emotionCacheSize = response.data;
+                })
+                .catch(error => {
+                    console.error('Error calculating emotion cache size: ', error);
+                });
+        },
+        clearEmotionCache() {
+            // 向后端发送请求清空情感分析语料缓存
+            axios.get('http://localhost:5000/api/emotion/cache/clear')
+                .then(response => {
+                    this.emotionCacheSize = response.data;
+                })
+                .catch(error => {
+                    console.error('Error clearing emotion cache: ', error);
+                });
+        },
+        calculateVideoCacheSize() {
+            // 向后端发送请求计算视频封面缓存大小
+            axios.get('http://localhost:5000/api/video/cache/size')
+                .then(response => {
+                    this.videoCacheSize = response.data;
+                })
+                .catch(error => {
+                    console.error('Error calculating video cache size: ', error);
+                });
+        },
+        clearVideoCache() {
+            // 向后端发送请求清空视频封面缓存
+            axios.get('http://localhost:5000/api/video/cache/clear')
+                .then(response => {
+                    this.videoCacheSize = response.data;
+                })
+                .catch(error => {
+                    console.error('Error clearing video cache: ', error);
+                });
+        }
     },
     setup() {
         const store = useStore(key);
@@ -381,5 +448,38 @@ pre {
     height: 30px;
     /* 调整为适合的大小 */
     width: auto;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    transition: background-color 0.3s;
+    /* 添加过渡效果 */
+    padding: 5px;
+    /* 添加 padding 来留出边距 */
+    border-radius: 10px;
+    /* 添加圆角 */
+}
+
+.setting-item:hover {
+    background-color: rgba(173, 216, 230, 0.5);
+    /* 鼠标 hover 时的背景颜色，可以根据需要调整 */
+}
+
+.setting-title {
+    flex: 1;
+    margin-right: 10px;
+    text-align: left;
+}
+
+.setting-actions {
+    display: flex;
+    align-items: center;
+}
+
+.setting-actions>* {
+    margin-left: 10px;
 }
 </style>

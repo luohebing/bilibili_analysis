@@ -10,13 +10,15 @@
                 <div v-if="videoInfo" style="margin-top: 10px; display: flex;">
                     <div style="flex: 1;">
                         <h1 class="video-title" style="text-align: left;">{{ videoInfo[7] }}</h1>
-                        <iframe :src="`//player.bilibili.com/player.html?bvid=${videoInfo[0]}&poster=1&autoplay=0`"
-                            scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"
-                            width="675" height="405">
-                        </iframe>
+                        <div style="text-align: left;">
+                            <iframe :src="`//player.bilibili.com/player.html?bvid=${videoInfo[0]}&poster=1&autoplay=0`"
+                                scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"
+                                width="675" height="405">
+                            </iframe>
+                        </div>
                         <hr
                             style="width: 675px; border-top: 0.5px; border-style: solid; border-color: rgb(227, 229, 231); box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.5);">
-                        <div class="video-desc"
+                        <div v-if="videoInfo[10]" class="video-desc"
                             style="text-align: left; width: 675px; height: 100px; overflow-y: auto; white-space: pre-wrap; margin-top: 5px; background-color: white;">
                             {{ videoInfo[10] }}
                         </div>
@@ -96,5 +98,14 @@ export default {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.video-desc {
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    /* 淡蓝色半透明边框 */
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+    /* 淡蓝色半透明发光效果 */
+    padding: 10px;
+    /* 添加内边距 */
 }
 </style>

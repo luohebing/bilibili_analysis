@@ -10,7 +10,7 @@ from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)  # 这行代码会启用 CORS，允许跨域请求
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:5175")  # 添加 CORS 设置
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")  # 添加 CORS 设置
 
 
 @app.errorhandler(500)
@@ -200,6 +200,55 @@ def get_specific_video():
     # video.append(cid)  # 将cid添加到video数组末端
 
     return jsonify(video)
+
+@app.route('/api/emotion/cache/size', methods=['GET'])
+def get_emotion_cache_size():
+    conn = sqlite3.connect('bilibili.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT SUM(length(sql))/1024 FROM sqlite_master WHERE type='table' AND name LIKE 'bvid_%'")
+    total_size_kb = cursor.fetchone()[0]
+    conn.close()
+
+    # 转换大小为适当的单位
+    if total_size_kb is not None:
+        if total_size_kb < 1024:  # 小于1MB
+            size_str = f"{total_size_kb:.2f} KB"
+        elif total_size_kb < 1024 * 1024:  # 小于1GB
+            size_str = f"{total_size_kb / 1024:.2f} MB"
+        else:  # 大于等于1GB
+            size_str = f"{total_size_kb / (1024 * 1024):.2f} GB"
+    else:
+        size_str = "0.00KB"
+
+    return jsonify(size_str)
+
+@app.route('/api/emotion/cache/clear', methods=['GET'])
+def clear_emotion_cache():
+    tools.clear_cache_tables('bilibili.db')
+    return get_emotion_cache_size()
+
+@app.route('/api/video/cache/size', methods=['GET'])
+def get_video_cache_size():
+    path = 'bilibili-vite/public/cover'
+    total_size = 0
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            fp = os.path.join(root, f)
+            total_size += os.path.getsize(fp)
+    total_size_kb = total_size / 1024
+    # 转换大小为适当的单位
+    if total_size_kb < 1024:  # 小于1MB
+        size_str = f"{total_size_kb:.2f} KB"
+    elif total_size_kb < 1024 * 1024:  # 小于1GB
+        size_str = f"{total_size_kb / 1024:.2f} MB"
+    else:  # 大于等于1GB
+        size_str = f"{total_size_kb / (1024 * 1024):.2f} GB"
+    return jsonify(size_str)
+
+@app.route('/api/video/cache/clear', methods=['GET'])
+def clear_video_cache():
+    tools.clear_image_cache()
+    return get_video_cache_size()
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, port=5000)
