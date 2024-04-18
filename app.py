@@ -25,7 +25,8 @@ def get_data():
 
 @app.route('/api/keywords', methods=['GET'])
 def get_keywords():
-    tools.get_keywords()
+    tid = request.args.get('tid')
+    tools.get_keywords(tid)
     tools.generate_wordcloud_from_db()
     conn = sqlite3.connect('bilibili.db')
     cursor = conn.cursor()
@@ -48,6 +49,7 @@ def get_keywords():
 @app.route('/api/videos', methods=['GET'])
 def get_videos():
     keyword = request.args.get('keyword')
+    tid = request.args.get('tid')
     conn = sqlite3.connect('bilibili.db')
     cursor = conn.cursor()
 
@@ -63,7 +65,10 @@ def get_videos():
     # 从 ranking 表中获取与 bvids 相关的视频
     videos = []
     for bvid in bvids:
-        cursor.execute("SELECT * FROM ranking WHERE bvid=?", (bvid,))
+        if int(tid) == 0:
+            cursor.execute("SELECT * FROM ranking WHERE bvid=?", (bvid,))
+        else:
+            cursor.execute(f"SELECT * FROM ranking_{tid} WHERE bvid=?", (bvid,))
         video = cursor.fetchone()
         if video is not None:
             videos.append(video)
@@ -152,10 +157,16 @@ def get_sentiment():
 
 @app.route('/api/ranking', methods=['GET'])
 def get_ranking():
-    # tools.get_ranking_data()
+    tid = request.args.get('tid')
+    if tid is None:
+        tid = 0
+    # tools.get_ranking_data(tid)
     conn = sqlite3.connect('bilibili.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM ranking")
+    if int(tid) == 0:
+        cursor.execute("SELECT * FROM ranking")
+    else:
+        cursor.execute(f"SELECT * FROM ranking_{tid}")
     data = cursor.fetchall()
     conn.close()
 
@@ -171,19 +182,64 @@ def get_ranking():
 
     return jsonify(data)
 
+    # tools.get_ranking_data()
+    # conn = sqlite3.connect('bilibili.db')
+    # cursor = conn.cursor()
+    # cursor.execute("SELECT * FROM ranking")
+    # data = cursor.fetchall()
+    # conn.close()
+
+    # # 尝试使用不同的编码来解码字节对象
+    # data = [list(row) for row in data]  # Convert tuples to lists
+    # for i, row in enumerate(data):
+    #     for j, item in enumerate(row):
+    #         if isinstance(item, bytes):
+    #             try:
+    #                 data[i][j] = item.decode("utf-8")
+    #             except UnicodeDecodeError:
+    #                 data[i][j] = item.decode("ISO-8859-1")
+
+    # return jsonify(data)
+
+@app.route('/api/updateranking', methods=['GET'])
+def update_ranking():
+    for tid in [0, 1, 3, 129, 4, 36, 188, 234, 223, 160, 211, 217, 119, 155, 5, 181, 177, 23, 11]:
+    # for tid in [11]:
+        tools.get_ranking_data(tid)
+    return jsonify({"message": "Ranking data updated successfully"})
+    
+
 @app.route('/api/specific_video', methods=['GET'])
 def get_specific_video():
     bvid = request.args.get('bvid')
     conn = sqlite3.connect('bilibili.db')
     cursor = conn.cursor()
 
+    ranking_video = None
+
+    # 遍历数据库中所有以ranking开头的表，如ranking，rankingabc等，若匹配bvid对应的项，中断遍历，将该项赋值给ranking_video
+    # 查询数据库中的所有表名
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    
+    # 遍历结果，查找以 "ranking" 为前缀的表名
+    for table in cursor.fetchall():
+        table_name = table[0]
+        if table_name.startswith("ranking"):
+            # print("Found table:", table_name)
+            cursor.execute(f"SELECT * FROM {table_name} WHERE bvid=?", (bvid,))
+            ranking_video = cursor.fetchone()
+            if ranking_video:
+                break
+        
     # Check if bvid exists in ranking table
-    cursor.execute("SELECT * FROM ranking WHERE bvid=?", (bvid,))
-    ranking_video = cursor.fetchone()
+    # cursor.execute("SELECT * FROM ranking WHERE bvid=?", (bvid,))
+    # ranking_video = cursor.fetchone()
     
     # Check if bvid exists in specific_video table
     cursor.execute("SELECT * FROM specific_video WHERE bvid=?", (bvid,))
     specific_video = cursor.fetchone()
+
+    
 
     if ranking_video:
         video = list(ranking_video)

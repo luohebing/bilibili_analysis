@@ -80,8 +80,8 @@ all_texts = []
 
 # 读取每个 bvid 对应的弹幕文本和评论文本
 for bvid in bvids:
-    get_danmaku.fetch_and_save_danmaku(bvid,config.cookie)
-    get_reply.fetch_and_save_comments(bvid,config.cookie)
+    get_danmaku.fetch_and_save_danmaku(bvid)
+    get_reply.fetch_and_save_comments(bvid)
     # 读取弹幕文本
     cursor.execute("SELECT content FROM bvid_{}_danmaku".format(bvid))
     danmaku_texts = [row[0] for row in cursor.fetchall()]

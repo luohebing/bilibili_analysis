@@ -8,7 +8,7 @@
                     style="font-size: 24px;font-family: 'ZCOOL KuaiLe', cursive;color: rgb(0, 178, 255);margin-left: 10px;">热点关注倾向实时分析</span>
             </el-menu-item>
             <div class="flex-grow" style="flex-grow: 1;" />
-            <el-menu-item index="ranking" @click="navigateToWordCloud">热门内容</el-menu-item>
+            <el-menu-item index="ranking" @click="navigateToRanking">热门内容</el-menu-item>
             <el-sub-menu index="analysis">
                 <template #title><b>分析模式</b></template>
                 <el-menu-item index="keywords" @click="navigateToWordCloud">关键词分析</el-menu-item>
@@ -45,6 +45,17 @@
                         <span>{{ videoCacheSize }}</span>
                         <el-button type="primary" @click="calculateVideoCacheSize">计算缓存大小</el-button>
                         <el-button type="danger" @click="clearVideoCache">清空缓存</el-button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <el-tooltip content="包含热门视频的标题、简介、标签、播放量等数据，分析系统的必要前提。" placement="top">
+                        <div class="setting-title"><b>热门稿件数据</b></div>
+                    </el-tooltip>
+                    <div class="setting-actions">
+                        <span>{{ videoCacheSize }}</span>
+                        <el-tooltip content="从b站获取最新热门数据，转储需要一定时间内。" placement="top">
+                            <el-button type="warning" @click="updateRanking" v-loading="isRefreshing">更新</el-button>
+                        </el-tooltip>
                     </div>
                 </div>
             </el-card>
@@ -84,9 +95,8 @@ export default {
         navigateToWordCloud() {
             this.$router.push({ name: 'WordCloud' }); // 使用路由的名称导航到 WordCloud.vue
         },
-        searchVideo() {
-            // 在这里发送请求到后端，获取并显示视频信息
-            // 例如：this.$http.get(`/api/videos/${this.bvid}`)
+        navigateToRanking() {
+            this.$router.push({ name: 'Ranking' }); // 使用路由的名称导航到 Ranking.vue
         },
         formatViews(views: number) {
             if (views >= 10000) {
@@ -184,16 +194,6 @@ export default {
             isRefreshing.value = false;
         };
 
-        const analyzeKeyword = async () => {
-            if (!selectedKeyword.value) {
-                ElMessage.warning('请先选择一个关键词');
-                return;
-            }
-
-            keywordDetail.value = keywords.value.find(keyword => keyword[0] === selectedKeyword.value) || null;
-            const response = await axios.get(`http://localhost:5000/api/videos?keyword=${selectedKeyword.value}`);
-            relatedVideos.value = response.data;
-        };
 
         const handleRowClick = (row: (string | number)[]) => {
             selectedKeyword.value = row[0] as string;
@@ -247,9 +247,24 @@ export default {
             isRefreshing.value = false;
         };
 
+        const updateRanking = () => {
+            isRefreshing.value = true;
+            axios.get('http://localhost:5000/api/updateranking')
+                .then(() => {
+                    // 请求完成后
+                    isRefreshing.value = false;
+                })
+                .catch(error => {
+                    console.error('发送请求时出错：', error);
+                    // 如果请求出错也要设置为 false
+                    isRefreshing.value = false;
+                });
+        }
+
 
 
         return {
+            updateRanking,
             analyzeSentiment,
             selectedTab,
             selectTab,
@@ -257,7 +272,6 @@ export default {
             RankingData,
             isRefreshing,
             refreshKeywords,
-            analyzeKeyword,
             selectedKeyword,
             wordCloudImage,
             handleRowClick,

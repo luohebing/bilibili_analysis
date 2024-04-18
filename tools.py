@@ -9,18 +9,30 @@ import matplotlib.pyplot as plt
 import requests
 
 #更新ranking排行榜
-def get_ranking_data():
+# def get_ranking_data():
+#     try:
+#         subprocess.run(['python', 'ranking_data.py'], check=True)
+#     except subprocess.CalledProcessError as e:
+#         print(f"Error: {e}")
+#     except FileNotFoundError:
+#         print("Error: 'ranking_data.py' not found in the current directory.")
+
+#更新ranking排行榜，可选传入ranking_data.py参数tid，类型为int，默认为0
+def get_ranking_data(tid=0):
     try:
-        subprocess.run(['python', 'ranking_data.py'], check=True)
+        subprocess.run(['python', 'ranking_data.py', str(tid)], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
     except FileNotFoundError:
         print("Error: 'ranking_data.py' not found in the current directory.")
 
+# get_ranking_data(3) #test
+    
+
 #更新keyword关键词
-def get_keywords():
+def get_keywords(tid=0):
     try:
-        subprocess.run(['python', 'TF-IDF_keyword.py'], check=True)
+        subprocess.run(['python', 'TF-IDF_keyword.py', str(tid)], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
     except FileNotFoundError:
@@ -192,12 +204,24 @@ def clear_image_cache():
 
 #获取cid
 def get_cid(bvid):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
-        'Cookie': config.cookie
-    }
+    headers = config.headers
     cid_url = f'https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp'
     cid_response = requests.get(cid_url, headers=headers)
     cid_data = cid_response.json()
     cid = cid_data['data'][0]['cid']
     return cid
+
+# 获取视频的 TAG 信息
+def get_video_tags(aid=None, bvid=None):
+    params = {}
+    if aid:
+        params['aid'] = aid
+    elif bvid:
+        params['bvid'] = bvid
+    else:
+        raise ValueError("Either 'aid' or 'bvid' must be provided.")
+
+    response = requests.get('https://api.bilibili.com/x/tag/archive/tags', params=params, headers=config.headers)
+    tag_data = response.json()['data']
+    tags = [tag['tag_name'] for tag in tag_data]  # 获取每个视频的 TAG 名称
+    return ','.join(tags)  # 将 TAG 名称列表转换为逗号分隔的字符串

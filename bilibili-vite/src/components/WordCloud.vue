@@ -8,7 +8,7 @@
           style="font-size: 24px;font-family: 'ZCOOL KuaiLe', cursive;color: rgb(0, 178, 255);margin-left: 10px;">热点关注倾向实时分析</span>
       </el-menu-item>
       <div class="flex-grow" style="flex-grow: 1;" />
-      <el-menu-item index="ranking">热门内容</el-menu-item>
+      <el-menu-item index="ranking" @click="navigateToRanking">热门内容</el-menu-item>
       <el-sub-menu index="analysis">
         <template #title><b>分析模式</b></template>
         <el-menu-item index="keywords">关键词分析</el-menu-item>
@@ -42,7 +42,21 @@
             <div>{{ item.value }} (权重: {{ item.weight.toFixed(3) }})</div>
           </template>
         </el-autocomplete>
-        <el-button type="primary" @click="refreshKeywords" v-loading="isRefreshing">刷新关键词</el-button>
+        <!-- <el-button type="primary" @click="refreshKeywords" v-loading="isRefreshing">刷新关键词</el-button> -->
+        <el-button type="primary" @click="showPartitionSelection" v-loading="isRefreshing">选择分区</el-button>
+
+        <el-dialog title="选择分区" v-model="partitionDialogVisible" :append-to-body="true">
+          <el-radio-group v-model="selectedPartition">
+            <el-radio v-for="(partition, index) in partitions" :key="index" :label="partition.tid">
+              {{ partition.name }}
+            </el-radio>
+          </el-radio-group>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="partitionDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="refreshKeywordsWithPartition">确定</el-button>
+          </span>
+        </el-dialog>
+
         <el-button type="primary" @click="analyzeKeyword">关键词解析</el-button>
       </el-card>
       <el-card v-if="keywordDetail" class="box-card"
@@ -83,38 +97,6 @@
       <!-- 视频分析的元素 -->
       <video-searching />
     </div>
-
-    <div v-if="selectedTab === 'ranking'">
-      <!-- 热门内容的元素 -->
-      <el-card class="box-card" style="margin-top: 100px;margin-left: 50px;width: 1425px;max-height: 80%;">
-        <div class="related-videos">
-          <div class="video" style="width: calc(20% - 20px);" v-for="(video, index) in RankingData" :key="index">
-            <a :href="`https://www.bilibili.com/video/${video[0]}`" target="_blank">
-              <div class="video-cover-container">
-                <img :src="`/cover/${video[0]}.jpg`" alt="Video cover" class="video-cover"
-                  @error="handleImageError(video)">
-                <video-icon class="video-icon" />
-                <span class="video-views">{{ formatViews(Number(video[17])) }}</span>
-                <danmaku-icon class="danmaku-icon" />
-                <span class="danmaku-views">{{ formatViews(Number(video[18])) }}</span>
-                <span class="video-duration">{{ formatDuration(Number(video[11])) }}</span>
-              </div>
-              <el-tooltip class="item" effect="dark" placement="bottom">
-                <template #content>
-                  <span v-html="getVideoInfo(video)"></span>
-                </template>
-                <p class="video-title">{{ video[7] }}</p>
-              </el-tooltip>
-            </a>
-          </div>
-        </div>
-      </el-card>
-    </div>
-
-    <div v-if="selectedTab === 'settings'">
-      <!-- 设置相关的元素 -->
-    </div>
-
   </div>
 </template>
 
@@ -146,9 +128,8 @@ export default {
     navigateToSettings() {
       this.$router.push({ name: 'Settings' }); // 使用路由的名称导航到 Settings.vue
     },
-    searchVideo() {
-      // 在这里发送请求到后端，获取并显示视频信息
-      // 例如：this.$http.get(`/api/videos/${this.bvid}`)
+    navigateToRanking() {
+      this.$router.push({ name: 'Ranking' }); // 使用路由的名称导航到 Ranking.vue
     },
     formatViews(views: number) {
       if (views >= 10000) {
@@ -181,6 +162,54 @@ export default {
     const relatedVideos = ref<(string | number)[][] | null>(null);
     const isRefreshing = ref(false);
     const selectedTab = ref(localStorage.getItem('selectedTab') || 'keywords');
+    const partitionDialogVisible = ref(false); // 控制选择分区对话框的显示与隐藏
+    const partitions = [
+      { tid: 0, name: '全站' },
+      { tid: 1, name: '动画' },
+      { tid: 3, name: '音乐' },
+      { tid: 4, name: '游戏' },
+      { tid: 36, name: '知识' },
+      { tid: 188, name: '科技' },
+      { tid: 129, name: '舞蹈' },
+      { tid: 234, name: '运动' },
+      { tid: 223, name: '汽车' },
+      { tid: 160, name: '生活' },
+      { tid: 211, name: '美食' },
+      { tid: 217, name: '动物圈' },
+      { tid: 119, name: '鬼畜' },
+      { tid: 155, name: '时尚' },
+      { tid: 5, name: '娱乐' },
+      { tid: 181, name: '影视' },
+      { tid: 177, name: '纪录片' },
+      { tid: 23, name: '电影' },
+      { tid: 11, name: '电视剧' },
+    ]; // 分区列表，包含tid和名称
+
+    const selectedPartition = ref(localStorage.getItem('selectedPartition') || 0); // 用户选择的分区
+
+    const showPartitionSelection = () => {
+      partitionDialogVisible.value = true;
+    };
+
+    const refreshKeywordsWithPartition = async () => {
+      // if (!selectedPartition.value) {
+      //   ElMessage.warning('请先选择一个分区');
+      //   return;
+      // }
+      isRefreshing.value = true;
+      console.log(selectedPartition.value);
+      // 发送带有选定分区参数的请求到后端
+      const response = await axios.get('http://localhost:5000/api/keywords', {
+        params: {
+          tid: selectedPartition.value // 将用户选择的分区tid作为参数发送到后端
+        }
+      });
+      store.commit('setKeywords', response.data);
+      localStorage.setItem('selectedPartition', selectedPartition.value.toString());
+      isRefreshing.value = false;
+      partitionDialogVisible.value = false; // 关闭选择分区对话框
+    };
+
 
     const selectTab = (tab: string) => {
       // if (tab === 'keywords' || tab === 'videos' || tab === 'settings' || tab === 'ranking') {
@@ -193,8 +222,10 @@ export default {
     // 当页面加载时，检查 localStorage 中是否有用户的选择
     onMounted(() => {
       const storedTab = localStorage.getItem('selectedTab');
+      const storedPartition = localStorage.getItem('selectedPartition');
       if (storedTab) {
         selectedTab.value = storedTab;
+        selectedPartition.value = storedPartition ? parseInt(storedPartition) : 0;
       }
     });
 
@@ -213,7 +244,13 @@ export default {
       }
 
       keywordDetail.value = keywords.value.find(keyword => keyword[0] === selectedKeyword.value) || null;
-      const response = await axios.get(`http://localhost:5000/api/videos?keyword=${selectedKeyword.value}`);
+      // const response = await axios.get(`http://localhost:5000/api/videos?keyword=${selectedKeyword.value}`);
+      const response = await axios.get(`http://localhost:5000/api/videos`, {
+        params: {
+          keyword: selectedKeyword.value,
+          tid: selectedPartition.value
+        }
+      });
       relatedVideos.value = response.data;
     };
 
@@ -272,6 +309,11 @@ export default {
 
 
     return {
+      partitions,
+      showPartitionSelection,
+      refreshKeywordsWithPartition,
+      partitionDialogVisible,
+      selectedPartition,
       analyzeSentiment,
       selectedTab,
       selectTab,

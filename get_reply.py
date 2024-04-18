@@ -2,15 +2,26 @@ import sqlite3
 import requests
 import config
 
-def fetch_and_save_comments(bvid, cookie):
+def fetch_and_save_comments(bvid):
     # 连接到数据库
     conn = sqlite3.connect('bilibili.db')
-    cur = conn.cursor()
 
     # 检索aid
     cur = conn.cursor()
-    cur.execute("SELECT aid FROM ranking WHERE bvid = ?", (bvid,))
-    aid = cur.fetchall()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    
+    # 遍历结果，查找以 "ranking" 为前缀的表名
+    for table in cur.fetchall():
+        table_name = table[0]
+        if table_name.startswith("ranking"):
+            print("Found table:", table_name)
+            cur.execute(f"SELECT * FROM {table_name} WHERE bvid=?", (bvid,))
+            aid = cur.fetchone()
+            if aid:
+                break
+
+    # cur.execute("SELECT aid FROM ranking WHERE bvid = ?", (bvid,))
+    # aid = cur.fetchall()
     if not aid:  # 如果在 ranking 表中没有找到 aid
         cur.execute("SELECT aid FROM specific_video WHERE bvid = ?", (bvid,))
         aid = cur.fetchall()
@@ -31,10 +42,7 @@ def fetch_and_save_comments(bvid, cookie):
             'pn': page,  # 当前页码
             'nohot': 0  # 显示热评
         }
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
-            'Cookie': cookie  # 使用 Cookie 认证
-        }
+        headers = config.headers
         response = requests.get(url, params=params, headers=headers)
         data = response.json()
         
@@ -51,4 +59,4 @@ def fetch_and_save_comments(bvid, cookie):
 
 # 示例使用
 # bvid = 'BV1kU421d7YH'  # 视频的 aid
-# fetch_and_save_comments(bvid, config.cookie)
+# fetch_and_save_comments(bvid)

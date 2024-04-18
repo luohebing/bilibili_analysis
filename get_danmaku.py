@@ -4,12 +4,9 @@ import xml.etree.ElementTree as ET
 import config
 
 
-def fetch_and_save_danmaku(bvid,cookie):
+def fetch_and_save_danmaku(bvid):
     # 设置请求头
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
-        'Cookie': cookie  # 使用 Cookie 认证
-    }
+    headers = config.headers
     # 获取视频cid
     cid_url = f'https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp'
     cid_response = requests.get(cid_url, headers=headers)
@@ -56,4 +53,4 @@ def fetch_and_save_danmaku(bvid,cookie):
 
 # 示例使用
 bvid = 'BV1kU421d7YH'  # 视频的 bvid
-fetch_and_save_danmaku(bvid,config.cookie)
+fetch_and_save_danmaku(bvid)

@@ -1,6 +1,13 @@
 import sqlite3
 from sklearn.feature_extraction.text import TfidfVectorizer
 from difflib import SequenceMatcher
+import sys
+
+# 检查是否提供了tid参数
+if len(sys.argv) < 2:
+    print("Error: bvid argument is missing.")
+# 从命令行参数中获取tid值
+tid = sys.argv[1]
 
 # 合并相似的关键词
 def merge_similar_keywords(keywords_info):
@@ -22,8 +29,12 @@ def merge_similar_keywords(keywords_info):
 conn = sqlite3.connect('bilibili.db')
 
 # 查询数据库获取视频信息
-cur = conn.cursor()
-cur.execute("SELECT title, tags, bvid FROM ranking")
+if int(tid) != 0:
+    cur = conn.cursor()
+    cur.execute("SELECT title, tags, bvid FROM ranking_{}".format(tid))
+else:
+    cur = conn.cursor()
+    cur.execute("SELECT title, tags, bvid FROM ranking")
 videos = cur.fetchall()
 
 # 将标题和标签组合成文档列表
@@ -69,7 +80,6 @@ conn.execute('''CREATE TABLE IF NOT EXISTS keywords (
                 neutral_count INTEGER,
                 negative_count INTEGER
                 )''')
-
 # 清空 keywords 表
 conn.execute("DELETE FROM keywords")
 
@@ -81,7 +91,10 @@ for keyword, weight in sorted_keywords:
 
 #过滤分区标签
 # 获取ranking表中的所有不重复的tname值
-cur.execute("SELECT DISTINCT tname FROM ranking")
+if int(tid) != 0:
+    cur.execute("SELECT DISTINCT tname FROM ranking_{}".format(tid))
+else:
+    cur.execute("SELECT DISTINCT tname FROM ranking")
 tname_values = [row[0] for row in cur.fetchall()]
 
 # 获取关键词表中的所有关键词

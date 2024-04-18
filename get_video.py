@@ -1,8 +1,10 @@
 import requests
 import sqlite3
-import ranking_data
+import tools
 import config
 import sys
+
+
 
 #目标视频
 # 检查是否提供了bvid参数
@@ -11,17 +13,16 @@ if len(sys.argv) < 2:
 # 从命令行参数中获取bvid值
 bvid = sys.argv[1]
 
+print("bvid: " + bvid)
+
 # 设置请求头
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
-    'Cookie': config.cookie  # 使用 Cookie 认证
-}
+headers = config.headers
 
 # 获取单个视频的详细信息
 def get_specific_video_info(bvid):
     params = {}
     params['bvid'] = bvid
-    # print(bvid)
+    print("bvid: " + bvid)
 
     response = requests.get('https://api.bilibili.com/x/web-interface/view', params=params, headers=headers)
     # video_data = response.json()
@@ -78,7 +79,7 @@ conn.execute('''INSERT OR REPLACE INTO specific_video (
                 video['stat']['view'], video['stat']['danmaku'], video['stat']['reply'], video['stat']['favorite'], video['stat']['coin'], video['stat']['share'], video['stat']['now_rank'], video['stat']['his_rank'], video['stat']['like'], video['stat']['dislike'], video['stat']['vt']))
 
 #添加 TAG 信息
-tags = ranking_data.get_video_tags(aid=video['aid'])  # 获取视频的 TAG 信息
+tags = tools.get_video_tags(aid=video['aid'])  # 获取视频的 TAG 信息
 conn.execute("UPDATE specific_video SET tags = ? WHERE aid = ?", (tags, video['aid']))  # 将 TAG 信息添加到数据库中
 
 # 插入新项到 keywords 表中，缺省 weight

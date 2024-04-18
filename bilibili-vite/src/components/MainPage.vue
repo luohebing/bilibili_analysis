@@ -52,12 +52,11 @@ export default {
             axios.get('http://localhost:5000/api/keywords')
                 .then(response => {
                     // 将数据保存到 Vuex 或其他状态管理库中
-                    // 然后在 WordCloud.vue 页面中读取这些数据
                     store.commit('setKeywords', response.data);
                     // console.log(response.data);
 
                     // 跳转到词云展示页面
-                    router.push({ name: 'WordCloud' });
+                    router.push({ name: 'Ranking' });
                 })
                 .catch(error => {
                     console.log(error);
