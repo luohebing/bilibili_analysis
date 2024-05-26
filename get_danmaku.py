@@ -28,7 +28,19 @@ def fetch_and_save_danmaku(bvid):
     # 创建表格
     table_name = f'bvid_{bvid}_danmaku'
     cur.execute(f'DROP TABLE IF EXISTS {table_name}')  # 清空表格
-    cur.execute(f'CREATE TABLE {table_name} (time REAL, type INTEGER, fontsize INTEGER, color INTEGER, timestamp INTEGER, sender_hash TEXT, dmid INTEGER, block_level INTEGER, content TEXT)')
+    cur.execute(f'''
+    CREATE TABLE {table_name} (
+        time REAL,
+        type INTEGER,
+        fontsize INTEGER,
+        color INTEGER,
+        timestamp INTEGER,
+        sender_hash TEXT,
+        dmid TEXT,
+        block_level INTEGER,
+        content TEXT
+    )
+    ''')
     
     # 提交更改
     conn.commit()

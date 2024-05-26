@@ -20,11 +20,23 @@
       </el-menu-item>
     </el-menu>
     <div class="overlay" v-show="isRefreshing"></div>
+
+    <el-dialog title="用户情感分析结果" v-model="sentimentAnalysisDialogVisible" width="50%" :append-to-body="true" v-draggable>
+      <div class="dialog-content">
+        <div ref="chart" style="height: 400px;"></div>
+      </div>
+      <template #footer>
+        <!-- <span class="dialog-footer">
+          <el-button @click="sentimentAnalysisDialogVisible = false">关闭</el-button>
+        </span> -->
+      </template>
+    </el-dialog>
+
     <div v-if="selectedTab === 'keywords'" class="keyword-section">
       <!-- 关键词分析的元素 -->
       <el-card class="box-card" style="margin-top: 100px;margin-left: 50px;width: 460px; max-height: 80%;">
         <div slot="header" class="clearfix">
-          <span><b>排行榜热搜关键词</b></span>
+          <span><b><span style="color: red">{{ selectedPartitionName }}</span>排行榜热搜关键词</b></span>
         </div>
         <el-table :data="keywords" style="width: 100%; overflow-y: auto; max-height: 440px;"
           @row-click="handleRowClick">
@@ -101,7 +113,7 @@
 </template>
 
 <script lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import axios from 'axios';
 import { key } from '../store';
@@ -109,6 +121,8 @@ import { ElMessage } from 'element-plus';
 import VideoIcon from './video_icon.vue';
 import DanmakuIcon from './danmaku_icon.vue'
 import VideoSearching from './video_searching.vue';
+import * as echarts from 'echarts';
+
 
 export default {
   components: {
@@ -163,6 +177,9 @@ export default {
     const isRefreshing = ref(false);
     const selectedTab = ref(localStorage.getItem('selectedTab') || 'keywords');
     const partitionDialogVisible = ref(false); // 控制选择分区对话框的显示与隐藏
+    const selectedPartitionName = ref('全站'); // 默认为全站，可以根据需要设置默认值
+    const chart = ref(null);
+    const sentimentAnalysisDialogVisible = ref(false);
     const partitions = [
       { tid: 0, name: '全站' },
       { tid: 1, name: '动画' },
@@ -206,6 +223,7 @@ export default {
       });
       store.commit('setKeywords', response.data);
       localStorage.setItem('selectedPartition', selectedPartition.value.toString());
+      selectedPartitionName.value = partitions.find(partition => partition.tid === selectedPartition.value)?.name || '全站';
       isRefreshing.value = false;
       partitionDialogVisible.value = false; // 关闭选择分区对话框
     };
@@ -293,17 +311,73 @@ export default {
         ElMessage.warning('请先选择一个关键词');
         return;
       }
-      isRefreshing.value = true;
-      const response = await axios.get(`http://localhost:5000/api/sentiment`, {
-        params: {
-          flag: 'keyword',
-          value: selectedKeyword.value
+
+      try {
+        isRefreshing.value = true;
+        const response = await axios.get(`http://localhost:5000/api/sentiment`, {
+          params: {
+            flag: 'keyword',
+            value: selectedKeyword.value
+          }
+        });
+        console.log("Sentiment Data:", response.data);
+        sentimentAnalysisDialogVisible.value = true; // 打开弹窗
+
+        await nextTick(); // 等待 DOM 更新
+
+        if (chart.value) {
+          // 检查并销毁已有的 ECharts 实例
+          if (echarts.getInstanceByDom(chart.value)) {
+            echarts.dispose(chart.value);
+          }
+          const data = response.data;
+          const [positive, neutral, negative] = data;
+          const chartInstance = echarts.init(chart.value);
+          const option = {
+            title: {
+              text: '情感分析',
+              subtext: '正向、中性、负向情感',
+              left: 'center'
+            },
+            tooltip: {
+              trigger: 'item'
+            },
+            legend: {
+              orient: 'vertical',
+              left: 'left',
+            },
+            series: [
+              {
+                name: '情感分布',
+                type: 'pie',
+                radius: '50%',
+                data: [
+                  { value: positive, name: '正向' },
+                  { value: neutral, name: '中性' },
+                  { value: negative, name: '负向' }
+                ],
+                label: {
+                  formatter: '{b}: {c} ({d}%)'
+                },
+                emphasis: {
+                  itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                  }
+                }
+              }
+            ]
+          };
+          chartInstance.setOption(option);
+        } else {
+          console.error('Chart element not found or not ready for initialization.');
         }
-      });
-      // 处理返回的数据，这里假设返回的数据是一个包含3个整型数的数组
-      const sentimentData = response.data;
-      console.log(sentimentData); // 或者你可以将数据存储在一个响应式变量中，然后在模板中显示
-      isRefreshing.value = false;
+      } catch (error) {
+        console.error('Error during sentiment analysis:', error);
+      } finally {
+        isRefreshing.value = false;
+      }
     };
 
 
@@ -331,7 +405,10 @@ export default {
       handleImageError,
       getVideoInfo,
       querySearch,
-      handleSelect // 添加这一行
+      handleSelect,
+      selectedPartitionName,
+      chart,
+      sentimentAnalysisDialogVisible,
     };
   }
 }
@@ -512,5 +589,10 @@ pre {
   height: 30px;
   /* 调整为适合的大小 */
   width: auto;
+}
+
+.sentimentChart {
+  width: 100%;
+  height: 400px;
 }
 </style>

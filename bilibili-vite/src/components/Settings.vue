@@ -52,7 +52,6 @@
                         <div class="setting-title"><b>热门稿件数据</b></div>
                     </el-tooltip>
                     <div class="setting-actions">
-                        <span>{{ videoCacheSize }}</span>
                         <el-tooltip content="从b站获取最新热门数据，转储需要一定时间内。" placement="top">
                             <el-button type="warning" @click="updateRanking" v-loading="isRefreshing">更新</el-button>
                         </el-tooltip>

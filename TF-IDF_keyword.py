@@ -6,6 +6,8 @@ import sys
 # 检查是否提供了tid参数
 if len(sys.argv) < 2:
     print("Error: bvid argument is missing.")
+    sys.exit(1)  # 程序退出，表示错误
+
 # 从命令行参数中获取tid值
 tid = sys.argv[1]
 
@@ -29,24 +31,22 @@ def merge_similar_keywords(keywords_info):
 conn = sqlite3.connect('bilibili.db')
 
 # 查询数据库获取视频信息
+cur = conn.cursor()
 if int(tid) != 0:
-    cur = conn.cursor()
     cur.execute("SELECT title, tags, bvid FROM ranking_{}".format(tid))
 else:
-    cur = conn.cursor()
     cur.execute("SELECT title, tags, bvid FROM ranking")
 videos = cur.fetchall()
 
 # 将标题和标签组合成文档列表
 documents = []
-for video in videos:
-    title, tags, bvid = video
+for title, tags, bvid in videos:
     document = title + ' ' + tags  # 将标题和标签合并为一个文档
-    documents.append((document, bvid))  # 将文档和 bvid 组成元组，以备后续使用
+    documents.append(document)  # 只保存文档，不保存bvid
 
 # 使用 TF-IDF 算法进行关键词提取
 tfidf_vectorizer = TfidfVectorizer(stop_words='english')
-tfidf_matrix = tfidf_vectorizer.fit_transform([doc for doc, _ in documents])
+tfidf_matrix = tfidf_vectorizer.fit_transform(documents)
 feature_names = tfidf_vectorizer.get_feature_names_out()
 
 # 计算全局关键词权重并保存相关视频的 bvid
@@ -61,15 +61,15 @@ for i, keyword in enumerate(feature_names):
 num_videos = len(videos)
 
 # 按照视频在排行榜中的位置进行加权
-for i, (document, bvid) in enumerate(documents):
+for i, document in enumerate(documents):
     tfidf_vector = tfidf_vectorizer.transform([document])  # 计算该视频的 TF-IDF 向量
     feature_indices = tfidf_vector.nonzero()[1]  # 获取非零元素的列索引（即关键词的索引）
     for idx in feature_indices:
         keyword = feature_names[idx]
         weight = tfidf_vector[0, idx] * (1 - i / num_videos)  # 根据视频在排行榜中的位置进行加权
         keyword_weights[keyword] += weight.item()  # 将稀疏矩阵元素转换为标量值，并进行加法运算
-        if bvid not in keyword_bvids[keyword]:
-            keyword_bvids[keyword].append(bvid)
+        if videos[i][2] not in keyword_bvids[keyword]:
+            keyword_bvids[keyword].append(videos[i][2])
 
 # 创建新表用于保存关键词及其权重和相关视频的 bvid
 conn.execute('''CREATE TABLE IF NOT EXISTS keywords (
@@ -89,12 +89,9 @@ for keyword, weight in sorted_keywords:
     bvids = ','.join(keyword_bvids[keyword])
     conn.execute("INSERT INTO keywords (keyword, weight, bvids) VALUES (?, ?, ?)", (keyword, weight, bvids))
 
-#过滤分区标签
+# 过滤分区标签
 # 获取ranking表中的所有不重复的tname值
-if int(tid) != 0:
-    cur.execute("SELECT DISTINCT tname FROM ranking_{}".format(tid))
-else:
-    cur.execute("SELECT DISTINCT tname FROM ranking")
+cur.execute("SELECT DISTINCT tname FROM ranking" if int(tid) == 0 else "SELECT DISTINCT tname FROM ranking_{}".format(tid))
 tname_values = [row[0] for row in cur.fetchall()]
 
 # 获取关键词表中的所有关键词
@@ -114,7 +111,6 @@ for keyword in keywords:
             break  # 找到相似项后，不再继续比较其他tname值
 
 # 合并相似的关键词
-cur = conn.cursor()
 cur.execute("SELECT keyword, weight, bvids FROM keywords")
 keywords_info = cur.fetchall()
 merged_keywords = merge_similar_keywords(keywords_info)

@@ -243,6 +243,15 @@ def get_specific_video():
 
     if ranking_video:
         video = list(ranking_video)
+        # 将视频详细信息保存到 specific_video 表中
+        cursor.execute('''INSERT INTO specific_video (
+                bvid, aid, videos, tid, tname, copyright, pic, title, pubdate, ctime, desc, duration, dynamic, tags, positive_count, neutral_count, negative_count,
+                view, danmaku, reply, favorite, coin, share, now_rank, his_rank, like, dislike, vt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (video[0], video[1], video[2], video[3], video[4], video[5], video[6], video[7], video[8], video[9], video[10], video[11], video[12], video[13], video[14], video[15], video[16], video[17], video[18], video[19], video[20], video[21], video[22], video[23], video[24], video[25], video[26], video[27]))
+        conn.commit()
+        
+        
     elif specific_video:
         video = list(specific_video)
     else:
