@@ -286,6 +286,17 @@ def get_specific_video():
 
     return jsonify(video)
 
+@app.route('/api/reply', methods=['GET'])
+def get_hot_reply():
+    bvid = request.args.get('bvid')
+    conn = sqlite3.connect('bilibili.db')
+    cursor = conn.cursor()
+    #SELECT数据库中bvid_{bvid}_reply表中前五十条数据并返回
+    cursor.execute("SELECT * FROM bvid_{}_reply ORDER BY likes DESC LIMIT 50".format(bvid))
+    reply = cursor.fetchall()
+    return jsonify(reply)
+
+
 @app.route('/api/emotion/cache/size', methods=['GET'])
 def get_emotion_cache_size():
     conn = sqlite3.connect('bilibili.db')

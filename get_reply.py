@@ -31,7 +31,10 @@ def fetch_and_save_comments(bvid):
     cur.execute(f'DROP TABLE IF EXISTS {table_name}')  # 清空表格
     cur.execute(f'CREATE TABLE {table_name} (comment TEXT, likes INTEGER)')
     
-    # 发送请求获取评论信息，并保存到数据库中
+    # 初始化一个列表来存储所有页面的评论
+    all_comments = []
+
+    # 发送请求获取评论信息
     for page in range(1, 21):  # 读取20页评论
         url = 'https://api.bilibili.com/x/v2/reply'
         params = {
@@ -46,12 +49,17 @@ def fetch_and_save_comments(bvid):
         response = requests.get(url, params=params, headers=headers)
         data = response.json()
         
-        # 提取评论并保存到数据库
-        comments = data['data']['replies']
-        for comment_info in comments:
-            comment = comment_info['content']['message']
-            likes = comment_info['like']
-            cur.execute(f"INSERT INTO {table_name} (comment, likes) VALUES (?, ?)", (comment, likes))
+        # 提取评论并添加到all_comments列表中
+        all_comments.extend(data['data']['replies'])
+
+    # 对所有评论进行降序排序，依据评论的'like'字段
+    sorted_comments = sorted(all_comments, key=lambda x: x['like'], reverse=True)
+
+    # 将排序后的评论保存到数据库
+    for comment_info in sorted_comments:
+        comment = comment_info['content']['message']
+        likes = comment_info['like']
+        cur.execute(f"INSERT INTO {table_name} (comment, likes) VALUES (?, ?)", (comment, likes))
     
     # 提交更改并关闭连接
     conn.commit()

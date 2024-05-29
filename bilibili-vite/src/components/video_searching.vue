@@ -36,25 +36,25 @@
                             {{ videoInfo[10] }}
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center;width: 675px;">
                         <el-table :data="[
                             { views: videoInfo[17], danmaku: videoInfo[18], reply: videoInfo[19], favorites: videoInfo[20] }
                         ]" style="width: 100%">
-                            <el-table-column prop="views" label="观看数" :min-width="40" align="center"></el-table-column>
-                            <el-table-column prop="danmaku" label="弹幕数" :min-width="40"
+                            <el-table-column prop="views" label="观看数" :min-width="60" align="center"></el-table-column>
+                            <el-table-column prop="danmaku" label="弹幕数" :min-width="60"
                                 align="center"></el-table-column>
-                            <el-table-column prop="reply" label="回复数" :min-width="40" align="center"></el-table-column>
-                            <el-table-column prop="favorites" label="收藏数" :min-width="40"
+                            <el-table-column prop="reply" label="回复数" :min-width="60" align="center"></el-table-column>
+                            <el-table-column prop="favorites" label="收藏数" :min-width="60"
                                 align="center"></el-table-column>
                         </el-table>
                         <el-table :data="[
                             { coin: videoInfo[21], share: videoInfo[22], rank: videoInfo[24], like: videoInfo[25] }
                         ]" style="width: 100%">
-                            <el-table-column prop="coin" label="硬币数" :min-width="40" align="center"></el-table-column>
-                            <el-table-column prop="share" label="分享数" :min-width="40" align="center"></el-table-column>
+                            <el-table-column prop="coin" label="硬币数" :min-width="60" align="center"></el-table-column>
+                            <el-table-column prop="share" label="分享数" :min-width="60" align="center"></el-table-column>
                             <el-table-column prop="rank" label="历史最高排行" :min-width="60"
                                 align="center"></el-table-column>
-                            <el-table-column prop="like" label="点赞数" :min-width="40" align="center"></el-table-column>
+                            <el-table-column prop="like" label="点赞数" :min-width="60" align="center"></el-table-column>
                         </el-table>
                     </div>
                 </div>
@@ -74,6 +74,7 @@ export default {
         return {
             bvid: '',
             videoInfo: null,
+            videoReply: null,
         };
     },
     methods: {
@@ -85,7 +86,16 @@ export default {
                     },
                 });
                 this.videoInfo = response.data;
+
+                // const replyResponse = await axios.get('http://localhost:5000/api/reply', {
+                //     params: {
+                //         bvid: this.bvid,
+                //     },
+                // });
+                // this.videoReply = replyResponse.data;
+
                 console.log(response.data);
+                // console.log(replyResponse.data)
 
             } catch (error) {
                 console.error(error);
