@@ -7,6 +7,7 @@ import os
 import requests
 from PIL import Image
 from io import BytesIO
+import get_reply
 
 app = Flask(__name__)
 CORS(app)  # 这行代码会启用 CORS，允许跨域请求
@@ -289,6 +290,7 @@ def get_specific_video():
 @app.route('/api/reply', methods=['GET'])
 def get_hot_reply():
     bvid = request.args.get('bvid')
+    get_reply.fetch_and_save_comments(bvid)
     conn = sqlite3.connect('bilibili.db')
     cursor = conn.cursor()
     #SELECT数据库中bvid_{bvid}_reply表中前五十条数据并返回

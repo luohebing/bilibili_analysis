@@ -56,6 +56,29 @@
                                 align="center"></el-table-column>
                             <el-table-column prop="like" label="点赞数" :min-width="60" align="center"></el-table-column>
                         </el-table>
+                        <div v-if="videoReply.length">
+                            <h3 class="comments-title">热门评论</h3>
+
+                            <div class="comments-wrapper">
+                                <div class="comments-container">
+                                    <div v-for="(comment, index) in currentPageComments" :key="index">
+                                        <div class="comment-wrapper">
+                                            <p class="comment-text"
+                                                style="height: 50px; overflow-y: auto; scrollbar-width: thin;">
+                                                {{ comment[0] }}
+                                            </p>
+                                            <!-- <p class="like-count">{{ comment[1] }} 点赞</p> -->
+                                        </div>
+                                        <hr v-if="index !== currentPageComments.length - 1" />
+                                    </div>
+                                </div>
+
+                                <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                                    :current-page.sync="currentPage" :page-sizes="[5]" :page-size="pageSize"
+                                    layout="total, sizes, prev, pager, next, jumper"
+                                    :total="commentCount"></el-pagination>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -65,7 +88,7 @@
 
 <script lang="ts">
 import { computed, ref, onMounted, watch, nextTick } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElPagination } from 'element-plus';
 import axios from 'axios';
 import * as echarts from 'echarts';
 
@@ -74,8 +97,22 @@ export default {
         return {
             bvid: '',
             videoInfo: null,
-            videoReply: null,
+            videoReply: [],
+            currentPage: 1,
+            pageSize: 5,
+            commentCount: 50,
+            currentPageComments: [],
         };
+    },
+    computed: {
+        // 计算当前页评论
+        computedComments() {
+            return this.videoReply.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+        },
+    },
+    mounted() {
+        // 初始化评论
+        this.currentPageComments = this.computedComments;
     },
     methods: {
         async searchVideo() {
@@ -87,19 +124,30 @@ export default {
                 });
                 this.videoInfo = response.data;
 
-                // const replyResponse = await axios.get('http://localhost:5000/api/reply', {
-                //     params: {
-                //         bvid: this.bvid,
-                //     },
-                // });
-                // this.videoReply = replyResponse.data;
+                const replyResponse = await axios.get('http://localhost:5000/api/reply', {
+                    params: {
+                        bvid: this.bvid,
+                    },
+                });
+                this.videoReply = replyResponse.data;
+                this.commentCount = this.videoReply.length;
+                this.currentPageComments = this.computedComments;
 
                 console.log(response.data);
-                // console.log(replyResponse.data)
+                console.log(replyResponse.data)
 
             } catch (error) {
                 console.error(error);
             }
+        },
+        handleSizeChange(newPageSize: number) {
+            this.pageSize = newPageSize;
+            this.currentPage = 1;
+            this.currentPageComments = this.computedComments;
+        },
+        handleCurrentChange(newPage: number) {
+            this.currentPage = newPage;
+            this.currentPageComments = this.computedComments;
         },
     },
     setup() {
@@ -218,9 +266,45 @@ export default {
     /* 添加内边距 */
 }
 
-/* .dialog-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-} */
+.comments-title {
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.comments-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.comments-container {
+    max-height: 300px;
+    /* 根据需要调整容器的最大高度 */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    /* 可选，仅在支持的浏览器中显示细长滚动条 */
+    border-top: 0.5px; border-style: solid; border-color: rgb(227, 229, 231); box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.5);
+}
+
+/* 隐藏滚动条但保留滚动功能（仅限Webkit内核浏览器） */
+.comments-container::-webkit-scrollbar {
+    width: 0;
+}
+
+.comment {
+    height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.comment-text {
+    margin-right: 10px;
+    /* 调整间距，根据实际需求 */
+}
+
+.like-count {
+    margin-top: 5px;
+}
 </style>
