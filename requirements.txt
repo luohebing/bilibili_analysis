@@ -1,0 +1,14 @@
+Flask==3.0.3
+Flask_Cors==4.0.0
+Flask_SocketIO==5.3.6
+jieba==0.42.1
+keras==2.10.0
+Keras_Preprocessing==1.1.2
+matplotlib==3.7.1
+numpy==1.25.0
+pandas==2.0.2
+Pillow==9.5.0
+Pillow==10.3.0
+Requests==2.32.3
+scikit_learn==1.2.2
+tensorflow_gpu==2.10.0

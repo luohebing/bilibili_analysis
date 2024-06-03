@@ -119,6 +119,18 @@ max_len = 280
 # 对文本进行情感分析
 predictions = analyze_sentiment(preprocessed_texts, model, tokenizer, max_len)
 
+# # 输出分析结果
+# print("情感分析结果:")
+# for i, prediction in enumerate(predictions):
+#     print("文本:", all_texts[i])
+#     print("预测结果:", prediction)
+#     if prediction[2] > 0.5:
+#         print("情感: 正面")
+#     elif prediction[1] > 0.5:
+#         print("情感: 中立")
+#     else:
+#         print("情感: 负面")
+
 # 统计正面和负面情感的数量
 positive_count = np.sum(predictions[:, 2] > 0.5)
 neutral_count = np.sum(predictions[:, 1] > 0.5)
